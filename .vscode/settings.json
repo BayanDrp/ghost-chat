@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    "*.hpp": "cpp",
+    "*.cpp": "cpp"
+  },
+  "editor.formatOnSave": true,
+  "editor.detectIndentation": false,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 4,
+  "C_Cpp.clang_format_style": "{ BasedOnStyle: LLVM, IndentWidth: 4, ColumnLimit: 100 }",
+  "cmake.configureOnOpen": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build"
+}
