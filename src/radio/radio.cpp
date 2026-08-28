@@ -1,0 +1,57 @@
+#include "ghostchat/radio/radio.hpp"
+
+#include <deque>
+#include <mutex>
+
+namespace ghostchat::radio {
+
+class LoopbackRadio : public Radio {
+public:
+    LoopbackRadio(std::uint64_t addr,
+                  std::shared_ptr<std::deque<std::vector<std::uint8_t>>> inbox,
+                  std::shared_ptr<std::deque<std::vector<std::uint8_t>>> peer_inbox,
+                  std::shared_ptr<std::mutex> mtx, std::string name)
+        : addr_(addr), inbox_(std::move(inbox)), peer_inbox_(std::move(peer_inbox)),
+          mtx_(std::move(mtx)), name_(std::move(name)) {}
+
+    bool start() override { return true; }
+    void stop() override {}
+
+    bool send(const std::vector<std::uint8_t> &frame) override {
+        std::lock_guard<std::mutex> lk(*mtx_);
+        peer_inbox_->push_back(frame);
+        return true;
+    }
+
+    std::optional<std::vector<std::uint8_t>> receive() override {
+        std::lock_guard<std::mutex> lk(*mtx_);
+        if (inbox_->empty()) return std::nullopt;
+        auto f = std::move(inbox_->front());
+        inbox_->pop_front();
+        return f;
+    }
+
+    std::uint64_t local_address() const override { return addr_; }
+    const std::string &interface_name() const override { return name_; }
+
+private:
+    std::uint64_t addr_;
+    std::shared_ptr<std::deque<std::vector<std::uint8_t>>> inbox_;
+    std::shared_ptr<std::deque<std::vector<std::uint8_t>>> peer_inbox_;
+    std::shared_ptr<std::mutex> mtx_;
+    std::string name_;
+};
+
+std::pair<RadioPtr, RadioPtr> make_loopback_pair(std::uint64_t addr_a,
+                                                 std::uint64_t addr_b) {
+    auto mtx = std::make_shared<std::mutex>();
+    auto a_inbox = std::make_shared<std::deque<std::vector<std::uint8_t>>>();
+    auto b_inbox = std::make_shared<std::deque<std::vector<std::uint8_t>>>();
+    auto a = std::make_shared<LoopbackRadio>(addr_a, a_inbox, b_inbox, mtx,
+                                             "loopbackA");
+    auto b = std::make_shared<LoopbackRadio>(addr_b, b_inbox, a_inbox, mtx,
+                                             "loopbackB");
+    return {a, b};
+}
+
+} // namespace ghostchat::radio
