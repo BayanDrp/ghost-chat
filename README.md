@@ -73,7 +73,8 @@ encrypt; a node without the key receives only undecryptable noise.
 
 For real off-grid WiFi, see `scripts/setup_wifi.sh` (puts an interface into
 IBSS/ad-hoc mode). `-r` selects the link backend (`afpacket`, the default; or
-`ieee802154` for RF).
+`ieee802154` for RF). For step-by-step over-the-air testing on real radios, see
+`docs/testing-irl.md`.
 
 ## Layout
 
