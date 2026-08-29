@@ -1,4 +1,5 @@
 #include "ghostchat/radio/afpacket.hpp"
+#include "ghostchat/radio/ieee802154.hpp"
 #include "ghostchat/radio/radio.hpp"
 #include "ghostchat/transport/transport.hpp"
 
@@ -17,21 +18,30 @@ using namespace ghostchat;
 int main(int argc, char **argv) {
     std::uint64_t node_id = 0x01;
     std::string iface = std::getenv("GHOSTCHAT_IFACE") ? std::getenv("GHOSTCHAT_IFACE") : "";
+    std::string radio_type = "afpacket";
     if (argc > 1) node_id = std::strtoull(argv[1], nullptr, 16);
     if (argc > 2) iface = argv[2];
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "-r" && i + 1 < argc) radio_type = argv[++i];
+    }
 
     radio::RadioPtr radio;
     transport::Transport *peer_transport = nullptr;
     std::unique_ptr<transport::Transport> peer_holder;
 
     if (!iface.empty()) {
-        auto *r = new radio::AFPacketRadio(iface, node_id);
+        radio::Radio *r = nullptr;
+        if (radio_type == "ieee802154")
+            r = new radio::Ieee802154Radio(iface, node_id);
+        else
+            r = new radio::AFPacketRadio(iface, node_id);
         if (!r->start()) {
             std::cerr << "failed to start radio on " << iface << "\n";
             return 1;
         }
         radio.reset(r);
-        std::cout << "ghostchat node " << std::hex << node_id << " on " << iface << "\n";
+        std::cout << "ghostchat node " << std::hex << node_id << " on " << iface
+                  << " (" << radio_type << ")\n";
     } else {
         std::uint64_t peer_id = (node_id == 0x01) ? 0x02 : 0x01;
         auto [ra, rb] = radio::make_loopback_pair(node_id, peer_id);
