@@ -23,6 +23,16 @@ void Transport::on_ack(std::function<void(std::uint32_t)> cb) {
     ack_cb_ = std::move(cb);
 }
 
+void Transport::on_peer(std::function<void(std::uint64_t)> cb) {
+    peer_cb_ = std::move(cb);
+}
+
+void Transport::discover() {
+    Frame f = create_frame(FrameType::Discovery, self(), kBroadcastAddress,
+                           next_seq_++, 0, {});
+    radio_->send(serialize(f));
+}
+
 bool Transport::send(std::uint64_t dst, const std::vector<std::uint8_t> &payload) {
     std::uint32_t seq = next_seq_++;
     Frame f = create_frame(FrameType::Message, self(), dst, seq,
@@ -47,7 +57,17 @@ void Transport::poll() {
         if (h.type == FrameType::Ack) {
             tracker_.ack(h.sequence);
             if (ack_cb_) ack_cb_(h.sequence);
+        } else if (h.type == FrameType::Discovery) {
+            auto [it, is_new] = peers_.insert(h.sender);
+            if (is_new && peer_cb_) peer_cb_(h.sender);
+            if (!(h.flags & kFlagDiscoveryResponse)) {
+                Frame resp = create_frame(FrameType::Discovery, self(), h.sender,
+                                          next_seq_++, kFlagDiscoveryResponse, {});
+                radio_->send(serialize(resp));
+            }
         } else if (h.type == FrameType::Message) {
+            auto [it, is_new] = peers_.insert(h.sender);
+            if (is_new && peer_cb_) peer_cb_(h.sender);
             if (msg_cb_) msg_cb_(h.sender, frame->payload);
             if (h.flags & kFlagAckRequested) {
                 Frame ack =
@@ -56,6 +76,10 @@ void Transport::poll() {
             }
         }
     }
+}
+
+std::vector<std::uint64_t> Transport::peers() const {
+    return {peers_.begin(), peers_.end()};
 }
 
 } // namespace ghostchat::transport

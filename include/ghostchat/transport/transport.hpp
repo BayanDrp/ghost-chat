@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <unordered_set>
 #include <vector>
 
 namespace ghostchat::transport {
@@ -14,20 +15,25 @@ public:
     explicit Transport(radio::RadioPtr radio);
 
     bool send(std::uint64_t dst, const std::vector<std::uint8_t> &payload);
+    void discover();
     void poll();
     void on_message(
         std::function<void(std::uint64_t, const std::vector<std::uint8_t> &)> cb);
     void on_ack(std::function<void(std::uint32_t)> cb);
+    void on_peer(std::function<void(std::uint64_t)> cb);
 
     bool pending() const;
     std::uint64_t self() const;
+    std::vector<std::uint64_t> peers() const;
 
 private:
     radio::RadioPtr radio_;
     ReliabilityTracker tracker_;
+    std::unordered_set<std::uint64_t> peers_;
     std::uint32_t next_seq_ = 0;
     std::function<void(std::uint64_t, const std::vector<std::uint8_t> &)> msg_cb_;
     std::function<void(std::uint32_t)> ack_cb_;
+    std::function<void(std::uint64_t)> peer_cb_;
     std::chrono::milliseconds timeout_{200};
     int max_tries_ = 5;
 };

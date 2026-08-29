@@ -20,6 +20,7 @@ enum class FrameType : std::uint8_t {
 constexpr std::uint8_t kFlagAckRequested = 0x01;
 constexpr std::uint8_t kFlagEncrypted = 0x02;
 constexpr std::uint8_t kFlagRelayed = 0x04;
+constexpr std::uint8_t kFlagDiscoveryResponse = 0x08;
 
 struct FrameHeader {
     std::uint16_t magic;
