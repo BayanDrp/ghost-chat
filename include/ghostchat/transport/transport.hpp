@@ -1,10 +1,12 @@
 #pragma once
 
+#include "ghostchat/crypto/crypto.hpp"
 #include "ghostchat/radio/radio.hpp"
 #include "ghostchat/transport/reliability.hpp"
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
@@ -17,6 +19,11 @@ public:
     bool send(std::uint64_t dst, const std::vector<std::uint8_t> &payload);
     void discover();
     void poll();
+
+    // Enable encryption. Optional: if never called, all frames stay plaintext
+    // (backward compatible). When set, payloads are encrypted and marked with
+    // kFlagEncrypted; receive() drops frames it cannot decrypt.
+    void set_key(const std::string &passphrase);
     void on_message(
         std::function<void(std::uint64_t, const std::vector<std::uint8_t> &)> cb);
     void on_ack(std::function<void(std::uint32_t)> cb);
@@ -28,6 +35,7 @@ public:
 
 private:
     radio::RadioPtr radio_;
+    std::optional<crypto::Key> key_;
     ReliabilityTracker tracker_;
     std::unordered_set<std::uint64_t> peers_;
     std::uint32_t next_seq_ = 0;

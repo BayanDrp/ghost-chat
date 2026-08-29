@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(ghostchat CXX)
 
+find_package(OpenSSL REQUIRED)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -17,6 +19,7 @@ list(REMOVE_ITEM GC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
 add_library(ghostchat_lib STATIC ${GC_SOURCES})
 target_include_directories(ghostchat_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(ghostchat_lib PUBLIC OpenSSL::Crypto)
 
 option(GHOSTCHAT_BUILD_TESTS "Build ghostchat tests" ON)
 if(GHOSTCHAT_BUILD_TESTS)

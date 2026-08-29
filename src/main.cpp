@@ -51,7 +51,17 @@ int main(int argc, char **argv) {
                   << " (loopback self-mode, peer=" << peer_id << ")\n";
     }
 
+    std::string key;
+    if (auto *e = std::getenv("GHOSTCHAT_KEY")) key = e;
+    for (int i = 1; i < argc; ++i)
+        if (std::string(argv[i]) == "-k" && i + 1 < argc) key = argv[++i];
+
     transport::Transport t(radio);
+    if (!key.empty()) {
+        t.set_key(key);
+        if (peer_transport) peer_transport->set_key(key);
+        std::cout << "encryption: ON\n";
+    }
     auto render = [](std::uint64_t from, const std::vector<std::uint8_t> &p) {
         std::cout << "\n[" << std::hex << from << "] "
                   << std::string(p.begin(), p.end()) << "\n> ";
