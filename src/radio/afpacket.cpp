@@ -79,7 +79,7 @@ std::vector<std::uint8_t> AFPacketRadio::make_discovery(bool response,
                                                        std::uint64_t dst_id) {
     std::uint8_t flags = response ? kFlagDiscoveryResponse : 0;
     Frame f = create_frame(FrameType::Discovery, node_id_, dst_id, discovery_seq_++,
-                           flags, {});
+                            flags, {});
     return serialize(f);
 }
 
@@ -151,6 +151,14 @@ bool AFPacketRadio::send(const std::vector<std::uint8_t> &frame) {
     return true;
 }
 
+bool AFPacketRadio::broadcast(const std::vector<std::uint8_t> &frame) {
+    if (sockfd_ < 0) return false;
+    if (frame.size() + kEthHeaderSize > kMaxEthFrame) return false;
+    std::uint8_t dst_mac[ETH_ALEN];
+    std::memset(dst_mac, 0xFF, ETH_ALEN);
+    return raw_send(frame, dst_mac);
+}
+
 std::optional<std::vector<std::uint8_t>> AFPacketRadio::receive() {
     if (sockfd_ < 0) return std::nullopt;
 
@@ -187,5 +195,12 @@ std::optional<std::vector<std::uint8_t>> AFPacketRadio::receive() {
 std::uint64_t AFPacketRadio::local_address() const { return node_id_; }
 
 const std::string &AFPacketRadio::interface_name() const { return name_; }
+
+std::vector<std::uint64_t> AFPacketRadio::neighbors() const {
+    std::vector<std::uint64_t> out;
+    out.reserve(neighbors_.size());
+    for (const auto &kv : neighbors_) out.push_back(kv.first);
+    return out;
+}
 
 } // namespace ghostchat::radio

@@ -9,6 +9,7 @@ Frame create_frame(FrameType type, std::uint64_t sender, std::uint64_t receiver,
     frame.header.magic = kMagic;
     frame.header.version = kVersion;
     frame.header.type = type;
+    frame.header.ttl = 0;  // hop limit; set by caller when flooding (mesh)
     frame.header.flags = flags;
     frame.header.sender = sender;
     frame.header.receiver = receiver;

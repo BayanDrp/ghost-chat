@@ -2,6 +2,7 @@
 
 #include "ghostchat/crypto/crypto.hpp"
 #include "ghostchat/radio/radio.hpp"
+#include "ghostchat/routing/mesh.hpp"
 #include "ghostchat/transport/reliability.hpp"
 
 #include <cstdint>
@@ -34,10 +35,15 @@ public:
     std::vector<std::uint64_t> peers() const;
 
 private:
+    // Send a frame to its destination: unicast when the destination is a direct
+    // neighbor, otherwise broadcast (flood) so intermediate nodes can relay it.
+    void emit(const protocol::Frame &frame);
+
     radio::RadioPtr radio_;
     std::optional<crypto::Key> key_;
     ReliabilityTracker tracker_;
     std::unordered_set<std::uint64_t> peers_;
+    routing::MeshRouter mesh_;
     std::uint32_t next_seq_ = 0;
     std::function<void(std::uint64_t, const std::vector<std::uint8_t> &)> msg_cb_;
     std::function<void(std::uint32_t)> ack_cb_;

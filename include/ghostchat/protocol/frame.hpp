@@ -26,6 +26,7 @@ struct FrameHeader {
     std::uint16_t magic;
     std::uint8_t version;
     FrameType type;
+    std::uint8_t ttl;
     std::uint8_t flags;
 
     std::uint64_t sender;
@@ -42,10 +43,10 @@ struct Frame {
 };
 
 Frame create_frame(FrameType type, std::uint64_t sender, std::uint64_t receiver,
-                   std::uint32_t sequence, std::uint8_t flags,
-                   const std::vector<std::uint8_t> &payload);
+                    std::uint32_t sequence, std::uint8_t flags,
+                    const std::vector<std::uint8_t> &payload);
 constexpr std::size_t kHeaderSize = sizeof(FrameHeader);
-constexpr std::size_t kWireHeaderSize = 27;
+constexpr std::size_t kWireHeaderSize = 28;
 constexpr std::size_t kChecksumSize = sizeof(std::uint32_t);
 constexpr std::size_t kMaxFrameSize = kWireHeaderSize + kMaxPayloadSize + kChecksumSize;
 

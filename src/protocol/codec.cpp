@@ -48,6 +48,7 @@ std::vector<std::uint8_t> serialize_body(const Frame &frame) {
     put_u16(out, frame.header.magic);
     out.push_back(frame.header.version);
     out.push_back(static_cast<std::uint8_t>(frame.header.type));
+    out.push_back(frame.header.ttl);
     out.push_back(frame.header.flags);
     put_u64(out, frame.header.sender);
     put_u64(out, frame.header.receiver);
@@ -76,31 +77,37 @@ std::vector<std::uint8_t> serialize(const Frame &frame) {
 }
 
 std::optional<Frame> parse(const std::vector<std::uint8_t> &data) {
-    if (data.size() < kWireHeaderSize + 4) return std::nullopt;
+    if (data.size() < kWireHeaderSize + 4)
+        return std::nullopt;
 
     std::uint16_t magic = get_u16(data, 0);
-    if (magic != kMagic) return std::nullopt;
+    if (magic != kMagic)
+        return std::nullopt;
 
     std::uint8_t version = data[2];
-    if (version != kVersion) return std::nullopt;
+    if (version != kVersion)
+        return std::nullopt;
 
     Frame frame;
     frame.header.magic = magic;
     frame.header.version = version;
     frame.header.type = static_cast<FrameType>(data[3]);
-    frame.header.flags = data[4];
-    frame.header.sender = get_u64(data, 5);
-    frame.header.receiver = get_u64(data, 13);
-    frame.header.sequence = get_u32(data, 21);
-    frame.header.payloadSize = get_u16(data, 25);
+    frame.header.ttl = data[4];
+    frame.header.flags = data[5];
+    frame.header.sender = get_u64(data, 6);
+    frame.header.receiver = get_u64(data, 14);
+    frame.header.sequence = get_u32(data, 22);
+    frame.header.payloadSize = get_u16(data, 26);
 
     std::size_t body_len = kWireHeaderSize + frame.header.payloadSize;
-    if (data.size() < body_len + 4) return std::nullopt;
+    if (data.size() < body_len + 4)
+        return std::nullopt;
 
     std::uint32_t stored_cs = get_u32(data, body_len);
-    std::uint32_t calc_cs = compute_checksum(
-        std::vector<std::uint8_t>(data.begin(), data.begin() + body_len));
-    if (stored_cs != calc_cs) return std::nullopt;
+    std::uint32_t calc_cs =
+        compute_checksum(std::vector<std::uint8_t>(data.begin(), data.begin() + body_len));
+    if (stored_cs != calc_cs)
+        return std::nullopt;
 
     frame.payload.assign(data.begin() + kWireHeaderSize, data.begin() + body_len);
     frame.checksum = calc_cs;

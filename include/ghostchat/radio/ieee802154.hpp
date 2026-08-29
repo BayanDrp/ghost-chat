@@ -19,9 +19,11 @@ public:
     bool start() override;
     void stop() override;
     bool send(const std::vector<std::uint8_t> &frame) override;
+    bool broadcast(const std::vector<std::uint8_t> &frame) override;
     std::optional<std::vector<std::uint8_t>> receive() override;
     std::uint64_t local_address() const override;
     const std::string &interface_name() const override;
+    std::vector<std::uint64_t> neighbors() const override;
 
 private:
     std::vector<std::uint8_t> make_discovery(bool response, std::uint64_t dst_id);

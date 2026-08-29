@@ -77,7 +77,7 @@ std::vector<std::uint8_t> Ieee802154Radio::make_discovery(bool response,
                                                          std::uint64_t dst_id) {
     std::uint8_t flags = response ? kFlagDiscoveryResponse : 0;
     Frame f = create_frame(FrameType::Discovery, node_id_, dst_id,
-                           discovery_seq_++, flags, {});
+                            discovery_seq_++, flags, {});
     return serialize(f);
 }
 
@@ -146,6 +146,13 @@ bool Ieee802154Radio::send(const std::vector<std::uint8_t> &frame) {
     return true;
 }
 
+bool Ieee802154Radio::broadcast(const std::vector<std::uint8_t> &frame) {
+    if (sockfd_ < 0) return false;
+    std::uint8_t dst_addr[8];
+    std::memset(dst_addr, 0xFF, 8);
+    return raw_send(frame, dst_addr);
+}
+
 std::optional<std::vector<std::uint8_t>> Ieee802154Radio::receive() {
     if (sockfd_ < 0) return std::nullopt;
 
@@ -180,5 +187,12 @@ std::optional<std::vector<std::uint8_t>> Ieee802154Radio::receive() {
 std::uint64_t Ieee802154Radio::local_address() const { return node_id_; }
 
 const std::string &Ieee802154Radio::interface_name() const { return name_; }
+
+std::vector<std::uint64_t> Ieee802154Radio::neighbors() const {
+    std::vector<std::uint64_t> out;
+    out.reserve(neighbors_.size());
+    for (const auto &kv : neighbors_) out.push_back(kv.first);
+    return out;
+}
 
 } // namespace ghostchat::radio
