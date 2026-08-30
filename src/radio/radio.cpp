@@ -30,6 +30,11 @@ public:
         return send(frame);
     }
 
+    bool send_to(const std::vector<std::uint8_t> &frame, std::uint64_t next_hop) override {
+        if (next_hop != peer_addr_) return false;  // not our direct peer
+        return send(frame);
+    }
+
     std::optional<std::vector<std::uint8_t>> receive() override {
         std::lock_guard<std::mutex> lk(*mtx_);
         if (inbox_->empty()) return std::nullopt;
@@ -98,6 +103,14 @@ public:
         for (auto n : nbrs_)
             if (fabric_->inboxes.count(n))
                 fabric_->inboxes[n]->push_back(frame);
+        return true;
+    }
+
+    bool send_to(const std::vector<std::uint8_t> &frame, std::uint64_t next_hop) override {
+        std::lock_guard<std::mutex> lk(fabric_->mtx);
+        auto it = fabric_->inboxes.find(next_hop);
+        if (it == fabric_->inboxes.end()) return false;
+        it->second->push_back(frame);
         return true;
     }
 

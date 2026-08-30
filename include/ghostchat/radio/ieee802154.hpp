@@ -20,6 +20,7 @@ public:
     void stop() override;
     bool send(const std::vector<std::uint8_t> &frame) override;
     bool broadcast(const std::vector<std::uint8_t> &frame) override;
+    bool send_to(const std::vector<std::uint8_t> &frame, std::uint64_t next_hop) override;
     std::optional<std::vector<std::uint8_t>> receive() override;
     std::uint64_t local_address() const override;
     const std::string &interface_name() const override;

@@ -15,6 +15,8 @@ enum class FrameType : std::uint8_t {
     Discovery = 0x01,
     Message = 0x02,
     Ack = 0x03,
+    RouteRequest = 0x04,
+    RouteReply = 0x05
 };
 
 constexpr std::uint8_t kFlagAckRequested = 0x01;
@@ -43,8 +45,8 @@ struct Frame {
 };
 
 Frame create_frame(FrameType type, std::uint64_t sender, std::uint64_t receiver,
-                    std::uint32_t sequence, std::uint8_t flags,
-                    const std::vector<std::uint8_t> &payload);
+                   std::uint32_t sequence, std::uint8_t flags,
+                   const std::vector<std::uint8_t> &payload);
 constexpr std::size_t kHeaderSize = sizeof(FrameHeader);
 constexpr std::size_t kWireHeaderSize = 28;
 constexpr std::size_t kChecksumSize = sizeof(std::uint32_t);

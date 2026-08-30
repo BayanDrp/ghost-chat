@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -36,8 +37,15 @@ public:
 
 private:
     // Send a frame to its destination: unicast when the destination is a direct
-    // neighbor, otherwise broadcast (flood) so intermediate nodes can relay it.
+    // neighbor, unicast along a learned route when one exists, otherwise broadcast
+    // (flood) so intermediate nodes can relay/forward it.
     void emit(const protocol::Frame &frame);
+
+    // Approach B (on-demand RREQ/RREP routing) helpers.
+    void send_rreq(std::uint64_t dst);                       // flood a RouteRequest
+    void send_rrep(std::uint64_t originator, std::uint64_t final_dst);  // reply to a RREQ
+    void flush_pending(std::uint64_t dst);                   // send queued data once a route exists
+    void deliver(const std::vector<std::uint8_t> &raw);      // route-aware (re)transmit of a frame
 
     radio::RadioPtr radio_;
     std::optional<crypto::Key> key_;
@@ -50,6 +58,8 @@ private:
     std::function<void(std::uint64_t)> peer_cb_;
     std::chrono::milliseconds timeout_{200};
     int max_tries_ = 5;
+    // Data frames waiting for a route (sent after the RREP arrives). Keyed by dst.
+    std::unordered_map<std::uint64_t, std::vector<std::vector<std::uint8_t>>> pending_data_;
 };
 
 } // namespace ghostchat::transport

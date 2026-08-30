@@ -153,6 +153,18 @@ bool Ieee802154Radio::broadcast(const std::vector<std::uint8_t> &frame) {
     return raw_send(frame, dst_addr);
 }
 
+bool Ieee802154Radio::send_to(const std::vector<std::uint8_t> &frame, std::uint64_t next_hop) {
+    if (sockfd_ < 0) return false;
+    if (frame.size() < 4) return false;
+    std::uint8_t dst_addr[8];
+    auto it = neighbors_.find(next_hop);
+    if (it == neighbors_.end())
+        std::memset(dst_addr, 0xFF, 8);                 // safety fallback: broadcast
+    else
+        std::memcpy(dst_addr, it->second.data(), 8);
+    return raw_send(frame, dst_addr);
+}
+
 std::optional<std::vector<std::uint8_t>> Ieee802154Radio::receive() {
     if (sockfd_ < 0) return std::nullopt;
 

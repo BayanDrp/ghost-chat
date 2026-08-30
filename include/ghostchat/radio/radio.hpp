@@ -18,6 +18,10 @@ public:
     virtual void stop() = 0;
     virtual bool send(const std::vector<std::uint8_t> &frame) = 0;
     virtual bool broadcast(const std::vector<std::uint8_t> &frame) = 0;
+    // Unicast `frame` to a specific one-hop neighbor `next_hop` (link address
+    // resolved from the neighbor table). Used by Approach B to forward along a
+    // learned route. Unlike send(), it never triggers a Discovery probe.
+    virtual bool send_to(const std::vector<std::uint8_t> &frame, std::uint64_t next_hop) = 0;
     virtual std::optional<std::vector<std::uint8_t>> receive() = 0;
     virtual std::uint64_t local_address() const = 0;
     virtual const std::string &interface_name() const = 0;
